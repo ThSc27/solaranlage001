@@ -384,13 +384,13 @@ bool DCDC_setVoltage(int voltage)
   Serial2.print(",\r\n");                           // complete command
   Serial2.flush();                                  // wait until complete pattern has been sent
   digitalWrite(RS485_DE, 0);                        // select rx mode
-  Serial2.setTimeout(20);                           // adjust 20ms rx timeout
-  RxBuf = Serial2.readString();                     // read answer
-  if (RxBuf.startsWith(":01ok"))                    // good ok answer?
-  {
-    retval = true;
-  }
-  return retval;
+//  Serial2.setTimeout(20);                           // adjust 20ms rx timeout
+//  RxBuf = Serial2.readString();                     // read answer
+//  if (RxBuf.startsWith(":01ok"))                    // good ok answer?
+//  {
+//    retval = true;
+//  }
+//  return retval;
 }
 
 /* set output current in mA */
@@ -403,7 +403,8 @@ void DCDC_setCurrent(int current)
   else if (current < 1000){Serial2.print("0");}
   Serial2.print(current);
   Serial2.print(",\r\n");
-  digitalWrite(RS485_DE, 1);
+  Serial2.flush();                                  // wait until complete pattern has been sent
+  digitalWrite(RS485_DE, 0);                        // select rx mode
 }
 /* read actual output current in mA */
 int DCDC_readCurrent(void)
@@ -444,43 +445,45 @@ void ControlDCDC(void)
      */
     static int dcdc_delay=0, dcdc_outputon=0, spannung, curr_meas;
     /* */
+//  static uint8_t prev_power;
 
-  dcdc_delay++; /* Update 1x pro sekunde */
-  if (dcdc_delay == 10){ 
-    dcdc_delay = 0;
+  dcdc_delay++; /* Update alle 3 sekunden */
+  if (dcdc_delay >= 30){ 
+//    dcdc_delay = 0;
+//    if (prev_power != wr2_target_power){
     switch (dcdc_controlmode) {
       case dcdc_off:
-            DCDC_setVoltage(0);
-            DCDC_setCurrent(0);
-            DCDC_out(false);
+            if (dcdc_delay == 30) {DCDC_setVoltage(0);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(0);}
+            if (dcdc_delay == 32) {DCDC_out(false); dcdc_delay = 0; }
             break;
       case fix_value:
         /* festen Leistungswert an DCDC-Wandler schicken */
         switch (wr2_target_power) {
           case 10:  /* 100W: Spannung = 33V, Strom = 3,3A */
-            DCDC_setVoltage(3300);
-            DCDC_setCurrent(3300);
-            DCDC_out(true);
+            if (dcdc_delay == 30) {DCDC_setVoltage(3300);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(3300);}
+            if (dcdc_delay == 32) {DCDC_out(true); dcdc_delay = 0; }
             break;
-          case 15:  /* 150W: Spannung = 30V, Strom = 5A */
-            DCDC_setVoltage(3000);
-            DCDC_setCurrent(5000);
-            DCDC_out(true);
+          case 15:  /* 150W: Spannung = 33V, Strom = 5A */
+            if (dcdc_delay == 30) {DCDC_setVoltage(3300);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(4800);}
+            if (dcdc_delay == 32) {DCDC_out(true); dcdc_delay = 0; }
             break;
           case 20:  /* 200W: Spannung = 31V, Strom = 6,5A */
-            DCDC_setVoltage(3100);
-            DCDC_setCurrent(6500);
-            DCDC_out(true);
+            if (dcdc_delay == 30) {DCDC_setVoltage(3300);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(6500);}
+            if (dcdc_delay == 32) {DCDC_out(true); dcdc_delay = 0; }
             break;
           case 25:  /* 250W: Spannung = 35V, Strom = 7,2A */
-            DCDC_setVoltage(3500);
-            DCDC_setCurrent(7200);
-            DCDC_out(true);
+            if (dcdc_delay == 30) {DCDC_setVoltage(3300);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(8000);}
+            if (dcdc_delay == 32) {DCDC_out(true); dcdc_delay = 0; }
             break;
           case 30:  /* 300W: Spannung = 40V, Strom = 10A (wird durch WR begrenzt) */
-            DCDC_setVoltage(4000);
-            DCDC_setCurrent(10000);
-            DCDC_out(true);
+            if (dcdc_delay == 30) {DCDC_setVoltage(3300);}
+            if (dcdc_delay == 31) {DCDC_setCurrent(10000);}
+            if (dcdc_delay == 32) {DCDC_out(true); dcdc_delay = 0; }
             break;
           default:
             break;
@@ -514,7 +517,8 @@ void ControlDCDC(void)
     }
   break;  
   }
-  
+//    }
+//  prev_power = wr2_target_power;
+    
   }
-
 }
